@@ -1,0 +1,21 @@
+version: '3'
+
+services:
+  tg-ytdlp-bot:
+    # 根据您的架构选择对应的镜像:
+    # AMD64 (x86_64): ainxxy/tg-ytdlp-bot:latest-amd64
+    # ARM64 (aarch64): ainxxy/tg-ytdlp-bot:latest-arm64
+    # ARMv7 (32位): ainxxy/tg-ytdlp-bot:latest-armv7
+    image: ainxxy/tg-ytdlp-bot:latest-amd64
+    container_name: tg-ytdlp-bot
+    volumes:
+      - /path/to/downloads:/downloads    # 下载文件保存路径
+    restart: unless-stopped
+    environment:
+      - TZ=Asia/Shanghai                   # 设置时区 
+      - BOT_TOKEN=your_bot_token        # Telegram Bot Token
+      - DOWNLOAD_PATH=/downloads           # 容器内的下载路径
+      - ADMIN_USER_ID=your_user_id      # 管理员的 Telegram ID
+      - HTTP_PROXY=your_proxy           # HTTP 代理地址（可选）
+      - HTTPS_PROXY=your_proxy          # HTTPS 代理地址（可选）
+    network_mode: "host"                # 使用主机网络模式 

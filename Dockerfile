@@ -4,6 +4,11 @@ FROM python:3.11-slim
 # 设置工作目录
 WORKDIR /app
 
+# 设置pip镜像源和超时时间
+ENV PIP_INDEX_URL=https://mirrors.aliyun.com/pypi/simple/ \
+    PIP_TRUSTED_HOST=mirrors.aliyun.com \
+    PIP_TIMEOUT=300
+
 # 安装系统依赖
 RUN apt-get update && apt-get install -y \
     ffmpeg \

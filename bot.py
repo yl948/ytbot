@@ -453,51 +453,77 @@ async def download_and_send_video(update: Update, context: ContextTypes.DEFAULT_
 
     status_message = await update.message.reply_text("⏳ 正在获取视频信息...")
     
-    try:
-        # 检查是否是 Shorts 视频
-        is_shorts = 'shorts' in url
-        
-        if is_shorts:
-            # Shorts 视频直接使用最高质量
-            await add_to_queue(
-                status_message,
-                url,
-                'best',  # 使用最高质量
-                '获取中...'  # 标题会在下载时更新
-            )
-        else:
-            # 普通视频显示质量选择
-            formats, video_title = await list_formats(url, HTTP_PROXY, status_message)
+    # 添加重试次数
+    max_retries = 3
+    retry_count = 0
+    
+    while retry_count < max_retries:
+        try:
+            # 检查是否是 Shorts 视频
+            is_shorts = 'shorts' in url
             
-            # 保存格式信息到 context.bot_data
-            context.bot_data['download_info'] = {
-                'url': url,
-                'title': video_title,
-                'formats': {f['format_id']: f for f in formats}
-            }
-            
-            buttons = []
-            for fmt in formats:
-                if fmt['format_id'] == 'best':
-                    label = "🎯 最佳质量"
-                else:
-                    # 只显示分辨率
-                    label = f"🎬 {fmt['key']}"
+            if is_shorts or not enable_quality_selection:
+                # Shorts 视频或禁用质量选择时直接使用最高质量
+                await add_to_queue(
+                    status_message,
+                    url,
+                    'best',
+                    '获取中...'
+                )
+            else:
+                # 普通视频且启用质量选择时显示质量选择
+                formats, video_title = await asyncio.wait_for(
+                    list_formats(url, HTTP_PROXY, status_message),
+                    timeout=60  # 设置60秒超时
+                )
                 
-                callback_data = f"dl_{fmt['format_id']}"
-                buttons.append([InlineKeyboardButton(label, callback_data=callback_data)])
+                # 保存格式信息到 context.bot_data
+                context.bot_data['download_info'] = {
+                    'url': url,
+                    'title': video_title,
+                    'formats': {f['format_id']: f for f in formats}
+                }
+                
+                buttons = []
+                for fmt in formats:
+                    if fmt['format_id'] == 'best':
+                        label = "🎯 最佳质量"
+                    else:
+                        label = f"🎬 {fmt['key']}"
+                    
+                    callback_data = f"dl_{fmt['format_id']}"
+                    buttons.append([InlineKeyboardButton(label, callback_data=callback_data)])
+                
+                reply_markup = InlineKeyboardMarkup(buttons)
+                
+                await status_message.edit_text(
+                    f"🎥 视频: {video_title}\n\n"
+                    "请选择下载质量:",
+                    reply_markup=reply_markup
+                )
             
-            reply_markup = InlineKeyboardMarkup(buttons)
+            # 如果成功，跳出循环
+            break
             
-            await status_message.edit_text(
-                f"🎥 视频: {video_title}\n\n"
-                "请选择下载质量:",
-                reply_markup=reply_markup
-            )
-            
-    except Exception as e:
-        logger.error(f"Error: {str(e)}")
-        await status_message.edit_text(f"❌ 获取视频信息失败: {str(e)}")
+        except asyncio.TimeoutError:
+            retry_count += 1
+            if retry_count < max_retries:
+                await status_message.edit_text(
+                    f"⚠️ 获取视频信息超时，正在重试 ({retry_count}/{max_retries})..."
+                )
+                await asyncio.sleep(2)  # 等待2秒后重试
+            else:
+                await status_message.edit_text(
+                    "❌ 获取视频信息失败：连接超时\n"
+                    "请检查网络连接或稍后重试"
+                )
+                logger.error(f"获取视频信息失败，已重试 {max_retries} 次")
+                return
+                
+        except Exception as e:
+            logger.error(f"Error: {str(e)}")
+            await status_message.edit_text(f"❌ 获取视频信息失败: {str(e)}")
+            return
 
 async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """处理按钮回调"""
@@ -774,7 +800,7 @@ async def toggle_quality(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         f"✅ 已{mode}质量选择\n\n"
         f"当前模式: {'手动选择质量 🎯' if enable_quality_selection else '自动最高质量 ⚡️'}\n"
-        "发送视频链接即可测试"
+        "发送视频链接开始下载"
     )
     logger.info(f"成功响应 /toggle_quality 命令 to user {update.effective_user.id}，当前模式: {mode}")
 

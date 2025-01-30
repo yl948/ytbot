@@ -1,0 +1,25 @@
+# Telegram Bot Token
+BOT_TOKEN = 'your_bot_token'
+
+# Admin Configuration
+ADMIN_USER_ID = 'your_user_id'
+
+# Download Configuration
+DOWNLOAD_PATH = '/app/downloads'
+
+# Proxy Configuration
+HTTP_PROXY = None
+HTTPS_PROXY = None
+
+# Feature Configuration
+enable_quality_selection = True
+
+# Supported URL patterns
+SUPPORTED_URLS = [
+    "youtube.com",
+    "youtu.be"
+]
+
+# Download Queue Configuration
+download_queue = []
+is_downloading = False 

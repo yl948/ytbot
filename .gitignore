@@ -40,4 +40,7 @@ downloads/
 config.py
 
 # Environment
-docker-compose.yml 
+docker-compose.yml
+
+# 确保示例文件不被忽略
+!config.py.example 

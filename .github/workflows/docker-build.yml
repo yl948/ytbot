@@ -1,11 +1,27 @@
 name: Build and Push Docker Images
 
+# 修改触发条件为手动触发
 on:
-  push:
-    branches: [ main ]
-    tags: [ 'v*' ]
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch:  # 添加手动触发
+    inputs:
+      version:
+        description: '版本标签 (例如: v1.0.0)'
+        required: true
+        default: 'latest'
+      platform:
+        description: '构建平台'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - amd64
+          - arm64
+      push_latest:
+        description: '是否同时更新 latest 标签'
+        required: true
+        type: boolean
+        default: false
 
 jobs:
   docker:
@@ -26,13 +42,51 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       
+      - name: Set platform
+        id: platform
+        run: |
+          if [ "${{ github.event.inputs.platform }}" = "amd64" ]; then
+            echo "platforms=linux/amd64" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event.inputs.platform }}" = "arm64" ]; then
+            echo "platforms=linux/arm64" >> $GITHUB_OUTPUT
+          else
+            echo "platforms=linux/amd64,linux/arm64" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Generate tags
+        id: tags
+        run: |
+          TAGS="ainxxy/youtube-dl-bot:${{ github.event.inputs.version }}"
+          
+          if [ "${{ github.event.inputs.platform }}" = "amd64" ]; then
+            TAGS="$TAGS,ainxxy/youtube-dl-bot:${{ github.event.inputs.version }}-amd64"
+          elif [ "${{ github.event.inputs.platform }}" = "arm64" ]; then
+            TAGS="$TAGS,ainxxy/youtube-dl-bot:${{ github.event.inputs.version }}-arm64"
+          else
+            TAGS="$TAGS,ainxxy/youtube-dl-bot:${{ github.event.inputs.version }}-amd64,ainxxy/youtube-dl-bot:${{ github.event.inputs.version }}-arm64"
+          fi
+          
+          if [ "${{ github.event.inputs.push_latest }}" = "true" ]; then
+            TAGS="$TAGS,ainxxy/youtube-dl-bot:latest"
+            if [ "${{ github.event.inputs.platform }}" = "amd64" ]; then
+              TAGS="$TAGS,ainxxy/youtube-dl-bot:latest-amd64"
+            elif [ "${{ github.event.inputs.platform }}" = "arm64" ]; then
+              TAGS="$TAGS,ainxxy/youtube-dl-bot:latest-arm64"
+            else
+              TAGS="$TAGS,ainxxy/youtube-dl-bot:latest-amd64,ainxxy/youtube-dl-bot:latest-arm64"
+            fi
+          fi
+          
+          echo "tags=$TAGS" >> $GITHUB_OUTPUT
+      
+      - name: Prepare config
+        run: |
+          cp config.py.example config.py
+      
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
           context: .
-          platforms: linux/amd64,linux/arm64
+          platforms: ${{ steps.platform.outputs.platforms }}
           push: true
-          tags: |
-            ainxxy/youtube-dl-bot:latest
-            ainxxy/youtube-dl-bot:latest-amd64
-            ainxxy/youtube-dl-bot:latest-arm64 
+          tags: ${{ steps.tags.outputs.tags }} 

@@ -56,24 +56,24 @@ jobs:
       - name: Generate tags
         id: tags
         run: |
-          TAGS="ainxxy/youtube-dl-bot:${{ github.event.inputs.version }}"
+          TAGS="ainxxy/tg-ytdlp-bot:${{ github.event.inputs.version }}"
           
           if [ "${{ github.event.inputs.platform }}" = "amd64" ]; then
-            TAGS="$TAGS,ainxxy/youtube-dl-bot:${{ github.event.inputs.version }}-amd64"
+            TAGS="$TAGS,ainxxy/tg-ytdlp-bot:${{ github.event.inputs.version }}-amd64"
           elif [ "${{ github.event.inputs.platform }}" = "arm64" ]; then
-            TAGS="$TAGS,ainxxy/youtube-dl-bot:${{ github.event.inputs.version }}-arm64"
+            TAGS="$TAGS,ainxxy/tg-ytdlp-bot:${{ github.event.inputs.version }}-arm64"
           else
-            TAGS="$TAGS,ainxxy/youtube-dl-bot:${{ github.event.inputs.version }}-amd64,ainxxy/youtube-dl-bot:${{ github.event.inputs.version }}-arm64"
+            TAGS="$TAGS,ainxxy/tg-ytdlp-bot:${{ github.event.inputs.version }}-amd64,ainxxy/tg-ytdlp-bot:${{ github.event.inputs.version }}-arm64"
           fi
           
           if [ "${{ github.event.inputs.push_latest }}" = "true" ]; then
-            TAGS="$TAGS,ainxxy/youtube-dl-bot:latest"
+            TAGS="$TAGS,ainxxy/tg-ytdlp-bot:latest"
             if [ "${{ github.event.inputs.platform }}" = "amd64" ]; then
-              TAGS="$TAGS,ainxxy/youtube-dl-bot:latest-amd64"
+              TAGS="$TAGS,ainxxy/tg-ytdlp-bot:latest-amd64"
             elif [ "${{ github.event.inputs.platform }}" = "arm64" ]; then
-              TAGS="$TAGS,ainxxy/youtube-dl-bot:latest-arm64"
+              TAGS="$TAGS,ainxxy/tg-ytdlp-bot:latest-arm64"
             else
-              TAGS="$TAGS,ainxxy/youtube-dl-bot:latest-amd64,ainxxy/youtube-dl-bot:latest-arm64"
+              TAGS="$TAGS,ainxxy/tg-ytdlp-bot:latest-amd64,ainxxy/tg-ytdlp-bot:latest-arm64"
             fi
           fi
           

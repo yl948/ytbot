@@ -46,10 +46,10 @@ jobs:
         id: tags
         run: |
           # 只生成带架构后缀的标签
-          TAGS="ainxxy/tg-ytdlp-bot:${{ github.event.inputs.version }}-${{ github.event.inputs.platform }}"
+          TAGS="ainxxy/ytbot:${{ github.event.inputs.version }}-${{ github.event.inputs.platform }}"
           
           if [ "${{ github.event.inputs.push_latest }}" = "true" ]; then
-            TAGS="$TAGS,ainxxy/tg-ytdlp-bot:latest-${{ github.event.inputs.platform }}"
+            TAGS="$TAGS,ainxxy/ytbot:latest-${{ github.event.inputs.platform }}"
           fi
           
           echo "tags=$TAGS" >> $GITHUB_OUTPUT

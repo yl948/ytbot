@@ -14,6 +14,8 @@ import sys
 from concurrent.futures import ThreadPoolExecutor
 import threading
 import psutil  # 需要添加到 requirements.txt
+from telegram.request import HTTPXRequest
+from telegram.ext import HTTPXRequest as ExtHTTPRequest
 
 # 设置日志
 logging.basicConfig(
@@ -947,15 +949,33 @@ def main():
     os.makedirs(DOWNLOAD_PATH, exist_ok=True)
     logger.info(f"📁 下载目录: {DOWNLOAD_PATH}")
     
-    # 显示代理信息
-    if HTTP_PROXY:
-        logger.info(f"🌐 代理已启用: {HTTP_PROXY}")
-    else:
-        logger.warning("⚠️ 未配置代理，可能无法访问YouTube")
-    
     try:
-        # 创建应用
-        application = Application.builder().token(BOT_TOKEN).build()
+        # 创建自定义请求对象，增加连接池大小和超时时间
+        request = HTTPXRequest(
+            connection_pool_size=8,  # 增加连接池大小
+            connect_timeout=30.0,    # 连接超时时间
+            read_timeout=30.0,       # 读取超时时间
+            write_timeout=30.0,      # 写入超时时间
+            pool_timeout=3.0,        # 池超时时间
+        )
+        
+        # 创建应用时使用自定义请求对象
+        application = (
+            Application.builder()
+            .token(BOT_TOKEN)
+            .request(request)
+            .get_updates_request(
+                ExtHTTPRequest(
+                    connection_pool_size=8,
+                    connect_timeout=30.0,
+                    read_timeout=30.0,
+                    write_timeout=30.0,
+                    pool_timeout=3.0,
+                )
+            )
+            .build()
+        )
+        
         logger.info("✅ Telegram Bot API 连接成功")
 
         # 添加处理程序

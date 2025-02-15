@@ -54,10 +54,6 @@ jobs:
           
           echo "tags=$TAGS" >> $GITHUB_OUTPUT
       
-      - name: Prepare config
-        run: |
-          cp config.py.example config.py
-      
       - name: Build and push
         uses: docker/build-push-action@v5
         with:

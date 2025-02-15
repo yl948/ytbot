@@ -15,7 +15,7 @@ from concurrent.futures import ThreadPoolExecutor
 import threading
 import psutil  # 需要添加到 requirements.txt
 from telegram.request import HTTPXRequest
-from telegram.ext import HTTPXRequest as ExtHTTPRequest
+from telegram.request import HTTPXRequest as ExtHTTPRequest
 
 # 设置日志
 logging.basicConfig(

@@ -859,26 +859,21 @@ async def queue_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("📭 下载队列为空")
         return
         
-    status_text = "📋 下载队列状态:\n\n"
+    status_text = "📋 下载列表状态:\n\n"
     
     # 显示正在下载的任务
-    if is_downloading:  # 移除 and download_queue 条件
+    if is_downloading:
         status_text += "⏳ 正在下载:\n"
-        # 显示当前正在下载的任务
-        current_tasks = download_queue[:concurrent_downloads]
-        for i, task in enumerate(current_tasks, 1):
-            status_text += f"{i}. {task['title']}\n"
-        
+        if download_queue:
+            status_text += f"当前有 {min(len(download_queue), concurrent_downloads)} 个任务正在下载中...\n"
+        else:
+            status_text += "当前有 1 个任务正在下载中...\n"
+    
     # 显示等待中的任务
     waiting_tasks = download_queue[concurrent_downloads:]
     if waiting_tasks:
         status_text += "\n⌛️ 等待下载:\n"
-        for i, task in enumerate(waiting_tasks, concurrent_downloads + 1):
-            status_text += f"{i}. {task['title']}\n"
-    
-    # 如果没有任何任务显示但 is_downloading 为 True
-    if is_downloading and not download_queue:
-        status_text += "当前有任务正在下载中...\n"
+        status_text += f"当前有 {len(waiting_tasks)} 个任务正在等待中...\n"
     
     await update.message.reply_text(status_text)
     logger.info(f"成功响应 /queue 命令 to user {update.effective_user.id}")

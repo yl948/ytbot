@@ -965,34 +965,21 @@ def main():
     
     while True:
         try:
-            # 修改请求对象配置
-            request = HTTPXRequest(
-                connection_pool_size=8,
-                connect_timeout=60.0,
-                read_timeout=60.0,
-                write_timeout=60.0,
-                pool_timeout=3.0
-            )
+            # 创建基础请求配置
+            base_request_config = {
+                'connection_pool_size': 8,
+                'connect_timeout': 60.0,
+                'read_timeout': 60.0,
+                'write_timeout': 60.0,
+                'pool_timeout': 3.0
+            }
             
-            # 使用 ApplicationBuilder 设置所有超时参数
+            # 使用统一的请求配置
             application = (
                 Application.builder()
                 .token(BOT_TOKEN)
-                .request(request)
-                .get_updates_request(
-                    ExtHTTPRequest(
-                        connection_pool_size=8,
-                        connect_timeout=60.0,
-                        read_timeout=60.0,
-                        write_timeout=60.0,
-                        pool_timeout=3.0
-                    )
-                )
-                .get_updates_connection_pool_size(8)
-                .get_updates_connect_timeout(60.0)
-                .get_updates_read_timeout(60.0)
-                .get_updates_write_timeout(60.0)
-                .get_updates_pool_timeout(3.0)
+                .request(HTTPXRequest(**base_request_config))
+                .get_updates_request(ExtHTTPRequest(**base_request_config))  # 只使用 get_updates_request
                 .build()
             )
             
@@ -1016,7 +1003,7 @@ def main():
             # 设置命令菜单
             asyncio.get_event_loop().run_until_complete(set_commands(application))
 
-            # 启动机器人，移除废弃的超时参数
+            # 启动机器人
             application.run_polling(
                 allowed_updates=Update.ALL_TYPES,
                 drop_pending_updates=True,  # 忽略启动时的待处理更新

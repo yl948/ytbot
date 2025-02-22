@@ -16,6 +16,8 @@ import threading
 import psutil  # 需要添加到 requirements.txt
 from telegram.request import HTTPXRequest
 from telegram.request import HTTPXRequest as ExtHTTPRequest
+from telegram.error import NetworkError, TimedOut
+import backoff  # 需要添加到 requirements.txt
 
 # 设置日志
 logging.basicConfig(
@@ -827,13 +829,23 @@ async def set_commands(application: Application):
 
 async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """处理错误"""
-    logger.error(f"更新 {update} 导致错误 {context.error}")
-    error_message = f"发生错误: {str(context.error)}"
-    
-    if update and update.effective_message:
-        await update.effective_message.reply_text(
-            "❌ 抱歉，发生了一些错误。请稍后重试。"
-        )
+    try:
+        if isinstance(context.error, NetworkError):
+            logger.warning(f"网络错误: {context.error}")
+            return
+        elif isinstance(context.error, TimedOut):
+            logger.warning(f"连接超时: {context.error}")
+            return
+            
+        logger.error(f"更新 {update} 导致错误 {context.error}", exc_info=context.error)
+        error_message = f"发生错误: {str(context.error)}"
+        
+        if update and update.effective_message:
+            await update.effective_message.reply_text(
+                "❌ 抱歉，发生了一些错误。请稍后重试。"
+            )
+    except Exception as e:
+        logger.error(f"错误处理器异常: {str(e)}")
 
 def format_size(bytes):
     """格式化文件大小，使用1000为基数"""
@@ -951,60 +963,74 @@ def main():
     os.makedirs(DOWNLOAD_PATH, exist_ok=True)
     logger.info(f"📁 下载目录: {DOWNLOAD_PATH}")
     
-    try:
-        # 创建自定义请求对象，增加连接池大小和超时时间
-        request = HTTPXRequest(
-            connection_pool_size=8,  # 增加连接池大小
-            connect_timeout=30.0,    # 连接超时时间
-            read_timeout=30.0,       # 读取超时时间
-            write_timeout=30.0,      # 写入超时时间
-            pool_timeout=3.0,        # 池超时时间
-        )
-        
-        # 创建应用时使用自定义请求对象
-        application = (
-            Application.builder()
-            .token(BOT_TOKEN)
-            .request(request)
-            .get_updates_request(
-                ExtHTTPRequest(
-                    connection_pool_size=8,
-                    connect_timeout=30.0,
-                    read_timeout=30.0,
-                    write_timeout=30.0,
-                    pool_timeout=3.0,
-                )
+    while True:
+        try:
+            # 创建自定义请求对象，增加连接池大小和超时时间
+            request = HTTPXRequest(
+                connection_pool_size=8,
+                connect_timeout=60.0,    # 增加连接超时时间
+                read_timeout=60.0,       # 增加读取超时时间
+                write_timeout=60.0,      # 增加写入超时时间
+                pool_timeout=3.0,
+                retries=3               # 添加重试次数
             )
-            .build()
-        )
-        
-        logger.info("✅ Telegram Bot API 连接成功")
+            
+            # 创建应用时使用自定义请求对象
+            application = (
+                Application.builder()
+                .token(BOT_TOKEN)
+                .request(request)
+                .get_updates_request(
+                    ExtHTTPRequest(
+                        connection_pool_size=8,
+                        connect_timeout=60.0,
+                        read_timeout=60.0,
+                        write_timeout=60.0,
+                        pool_timeout=3.0,
+                        retries=3
+                    )
+                )
+                .build()
+            )
+            
+            logger.info("✅ Telegram Bot API 连接成功")
 
-        # 添加处理程序
-        application.add_handler(CommandHandler("start", start))
-        application.add_handler(CommandHandler("help", help_command))
-        application.add_handler(CommandHandler("status", status_command))
-        application.add_handler(CommandHandler("toggle_quality", toggle_quality))
-        application.add_handler(CommandHandler("queue", queue_status))
-        application.add_handler(CommandHandler("concurrent", set_concurrent_downloads))
-        application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, download_and_send_video))
-        application.add_handler(CallbackQueryHandler(button_callback))
-        
-        # 添加错误处理器
-        application.add_error_handler(error_handler)
-        
-        logger.info("✅ 命令处理程序注册完成")
+            # 添加处理程序
+            application.add_handler(CommandHandler("start", start))
+            application.add_handler(CommandHandler("help", help_command))
+            application.add_handler(CommandHandler("status", status_command))
+            application.add_handler(CommandHandler("toggle_quality", toggle_quality))
+            application.add_handler(CommandHandler("queue", queue_status))
+            application.add_handler(CommandHandler("concurrent", set_concurrent_downloads))
+            application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, download_and_send_video))
+            application.add_handler(CallbackQueryHandler(button_callback))
+            
+            # 添加错误处理器
+            application.add_error_handler(error_handler)
+            
+            logger.info("✅ 命令处理程序注册完成")
 
-        # 设置命令菜单
-        asyncio.get_event_loop().run_until_complete(set_commands(application))
+            # 设置命令菜单
+            asyncio.get_event_loop().run_until_complete(set_commands(application))
 
-        # 启动机器人
-        logger.info("🚀 机器人开始运行...")
-        application.run_polling(allowed_updates=Update.ALL_TYPES)
-        
-    except Exception as e:
-        logger.error(f"启动失败: {str(e)}")
-        raise
+            # 启动机器人
+            logger.info("🚀 机器人开始运行...")
+            application.run_polling(
+                allowed_updates=Update.ALL_TYPES,
+                drop_pending_updates=True,  # 忽略启动时的待处理更新
+                poll_interval=1.0,          # 降低轮询间隔
+                timeout=60                  # 增加超时时间
+            )
+            
+        except (NetworkError, TimedOut) as e:
+            logger.warning(f"网络错误，将在 10 秒后重试: {str(e)}")
+            time.sleep(10)
+            continue
+            
+        except Exception as e:
+            logger.error(f"严重错误，将在 30 秒后重试: {str(e)}")
+            time.sleep(30)
+            continue
 
 if __name__ == '__main__':
     main() 

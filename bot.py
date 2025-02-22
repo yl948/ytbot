@@ -965,14 +965,13 @@ def main():
     
     while True:
         try:
-            # 创建自定义请求对象，增加连接池大小和超时时间
+            # 修改请求对象配置，移除不支持的 retries 参数
             request = HTTPXRequest(
                 connection_pool_size=8,
                 connect_timeout=60.0,    # 增加连接超时时间
                 read_timeout=60.0,       # 增加读取超时时间
                 write_timeout=60.0,      # 增加写入超时时间
-                pool_timeout=3.0,
-                retries=3               # 添加重试次数
+                pool_timeout=3.0
             )
             
             # 创建应用时使用自定义请求对象
@@ -986,8 +985,7 @@ def main():
                         connect_timeout=60.0,
                         read_timeout=60.0,
                         write_timeout=60.0,
-                        pool_timeout=3.0,
-                        retries=3
+                        pool_timeout=3.0
                     )
                 )
                 .build()
@@ -1013,13 +1011,16 @@ def main():
             # 设置命令菜单
             asyncio.get_event_loop().run_until_complete(set_commands(application))
 
-            # 启动机器人
-            logger.info("🚀 机器人开始运行...")
+            # 启动机器人时添加重试策略
             application.run_polling(
                 allowed_updates=Update.ALL_TYPES,
                 drop_pending_updates=True,  # 忽略启动时的待处理更新
                 poll_interval=1.0,          # 降低轮询间隔
-                timeout=60                  # 增加超时时间
+                timeout=60,                 # 增加超时时间
+                read_timeout=60,            # 读取超时
+                write_timeout=60,           # 写入超时
+                connect_timeout=60,         # 连接超时
+                pool_timeout=3.0            # 连接池超时
             )
             
         except (NetworkError, TimedOut) as e:

@@ -18,18 +18,17 @@
 
 ### 配置环境变量
 
-首先，创建并配置`.env`文件：
+首先，创建并配置环境变量：
 
 ```bash
-# 克隆仓库或下载.env.example文件
+# 克隆仓库
 git clone https://github.com/yl948/ytbot.git
 cd ytbot
 
-# 或者直接下载示例文件
-curl -O https://raw.githubusercontent.com/yl948/ytbot/main/.env.example
+# 创建环境变量文件
+touch .env
 
-# 复制示例文件并编辑
-cp .env.example .env
+# 编辑.env文件
 nano .env  # 或使用任何文本编辑器
 ```
 
@@ -45,8 +44,8 @@ ADMIN_USER_ID=123456789
 DOWNLOAD_PATH=/app/downloads
 
 # 代理设置 (可选，中国用户可能需要设置)
-# HTTP_PROXY=http://host.docker.internal:7890
-# HTTPS_PROXY=http://host.docker.internal:7890
+HTTP_PROXY=http://host.docker.internal:7890
+HTTPS_PROXY=http://host.docker.internal:7890
 ```
 
 ### 使用预构建镜像
@@ -57,31 +56,64 @@ docker run -d \
   --name ytbot \
   --restart unless-stopped \
   -v $(pwd)/downloads:/app/downloads \
-  -v $(pwd)/.env:/app/.env \
+  --env-file .env \
   ainxxy/ytbot:latest
 ```
 
 ### 使用docker-compose
 
-创建`docker-compose.yml`文件：
+克隆示例配置文件并进行修改：
+
+```bash
+# 复制示例配置文件
+cp docker-compose.yml.example docker-compose.yml
+
+# 编辑配置文件
+nano docker-compose.yml  # 或使用任何文本编辑器
+```
+
+`docker-compose.yml`文件示例：
 
 ```yaml
-version: '3'
+services:
+  ytbot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ytbot
+    restart: unless-stopped
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
+      - ADMIN_USER_ID=${ADMIN_USER_ID}
+      - DOWNLOAD_PATH=/app/downloads
+      # 如果需要代理，取消下面两行的注释并填入代理地址
+      # - HTTP_PROXY=${HTTP_PROXY}
+      # - HTTPS_PROXY=${HTTPS_PROXY}
+    volumes:
+      - ./downloads:/app/downloads
+    network_mode: "host"
+```
 
+你可以选择使用预构建镜像或本地构建：
+
+1. 使用预构建镜像：
+```yaml
+# 修改docker-compose.yml中的build部分为image
 services:
   ytbot:
     image: ainxxy/ytbot:latest
-    container_name: ytbot
-    restart: unless-stopped
-    volumes:
-      - ./downloads:/app/downloads
-      - ./.env:/app/.env
-    # 如果您不使用.env文件，也可以直接在这里设置环境变量
-    # environment:
-    #   - BOT_TOKEN=您的Telegram机器人Token
-    #   - ADMIN_USER_ID=您的Telegram用户ID
-    #   - DOWNLOAD_PATH=/app/downloads
-    #   - HTTP_PROXY=您的代理地址
+    # 或者指定架构
+    # image: ainxxy/ytbot:latest-amd64
+    # image: ainxxy/ytbot:latest-arm64
+```
+
+2. 使用本地构建（默认配置）：
+```yaml
+services:
+  ytbot:
+    build:
+      context: .
+      dockerfile: Dockerfile
 ```
 
 然后启动容器：
@@ -169,6 +201,30 @@ python bot.py
 - 该机器人默认仅允许管理员使用
 - 下载的视频会自动保存在配置的下载目录中
 - 支持的链接格式: youtube.com, youtu.be
+- 在中国使用时，通常需要配置代理
+
+## 网络配置说明
+
+### 主机网络模式
+
+默认配置使用`network_mode: "host"`，这在Linux环境下效果最好，特别是需要使用宿主机代理的情况。
+
+### 桥接网络模式
+
+如果遇到网络连接问题，可以尝试使用桥接网络模式：
+
+```yaml
+services:
+  ytbot:
+    # 删除 network_mode: "host" 行
+    # 添加以下配置
+    network_mode: "bridge"
+    # 如果需要使用宿主机代理，可以使用host.docker.internal
+    environment:
+      # ...其他环境变量
+      - HTTP_PROXY=http://host.docker.internal:7890
+      - HTTPS_PROXY=http://host.docker.internal:7890
+```
 
 ## 自定义构建
 

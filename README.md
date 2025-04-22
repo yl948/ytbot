@@ -16,33 +16,91 @@
 
 ## 使用Docker（推荐）
 
-### 使用预构建镜像（支持AMD64和ARM64）
+### 配置环境变量
+
+首先，创建并配置`.env`文件：
 
 ```bash
-# 创建.env文件
-cp .env.example .env
-# 编辑.env文件填入你的Telegram机器人Token和用户ID
-nano .env
+# 克隆仓库或下载.env.example文件
+git clone https://github.com/yl948/ytbot.git
+cd ytbot
 
-# 运行容器
+# 或者直接下载示例文件
+curl -O https://raw.githubusercontent.com/yl948/ytbot/main/.env.example
+
+# 复制示例文件并编辑
+cp .env.example .env
+nano .env  # 或使用任何文本编辑器
+```
+
+`.env`文件内容示例：
+```
+# Telegram Bot Token (必须，从BotFather获取 https://t.me/BotFather)
+BOT_TOKEN=1234567890:ABCDEFGHIJKLMNOPQRSTUVWXYZ
+
+# 管理员用户ID (必须，使用 @userinfobot 获取)
+ADMIN_USER_ID=123456789
+
+# 下载路径 (Docker容器内路径，通常无需修改)
+DOWNLOAD_PATH=/app/downloads
+
+# 代理设置 (可选，中国用户可能需要设置)
+# HTTP_PROXY=http://host.docker.internal:7890
+# HTTPS_PROXY=http://host.docker.internal:7890
+```
+
+### 使用预构建镜像
+
+```bash
+# 使用docker命令运行
 docker run -d \
   --name ytbot \
   --restart unless-stopped \
   -v $(pwd)/downloads:/app/downloads \
-  --env-file .env \
+  -v $(pwd)/.env:/app/.env \
   ainxxy/ytbot:latest
 ```
 
 ### 使用docker-compose
 
-```bash
-# 创建.env文件
-cp .env.example .env
-# 编辑.env文件填入你的Telegram机器人Token和用户ID
-nano .env
+创建`docker-compose.yml`文件：
 
-# 启动容器
+```yaml
+version: '3'
+
+services:
+  ytbot:
+    image: ainxxy/ytbot:latest
+    container_name: ytbot
+    restart: unless-stopped
+    volumes:
+      - ./downloads:/app/downloads
+      - ./.env:/app/.env
+    # 如果您不使用.env文件，也可以直接在这里设置环境变量
+    # environment:
+    #   - BOT_TOKEN=您的Telegram机器人Token
+    #   - ADMIN_USER_ID=您的Telegram用户ID
+    #   - DOWNLOAD_PATH=/app/downloads
+    #   - HTTP_PROXY=您的代理地址
+```
+
+然后启动容器：
+
+```bash
 docker-compose up -d
+```
+
+### 查看日志和状态
+
+```bash
+# 查看日志
+docker logs ytbot
+
+# 实时跟踪日志
+docker logs -f ytbot
+
+# 检查容器状态
+docker ps | grep ytbot
 ```
 
 ## 手动安装

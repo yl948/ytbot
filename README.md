@@ -30,7 +30,7 @@ docker run -d \
   --restart unless-stopped \
   -v $(pwd)/downloads:/app/downloads \
   --env-file .env \
-  yl948/ytbot:latest
+  ainxxy/ytbot:latest
 ```
 
 ### 使用docker-compose
@@ -131,8 +131,8 @@ python bot.py
    - 选择是否同时发布为latest标签
    - 点击 `Run workflow` 开始构建
 4. 构建完成后，镜像将发布到Docker Hub:
-   - 指定版本: `YOUR_USERNAME/ytbot:1.0.0`
-   - latest标签: `YOUR_USERNAME/ytbot:latest`
+   - 指定版本: `ainxxy/ytbot:1.0.0`
+   - latest标签: `ainxxy/ytbot:latest`
 
 ### 本地构建
 
@@ -140,10 +140,10 @@ python bot.py
 
 ```bash
 # 构建多架构镜像（需要设置Docker Buildx）
-docker buildx build --platform linux/amd64,linux/arm64 -t yourusername/ytbot:1.0.0 .
+docker buildx build --platform linux/amd64,linux/arm64 -t ainxxy/ytbot:1.0.0 .
 
 # 仅构建当前平台镜像
-docker build -t yourusername/ytbot:1.0.0 .
+docker build -t ainxxy/ytbot:1.0.0 .
 ```
 
 ## 许可证

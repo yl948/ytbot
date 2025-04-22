@@ -114,7 +114,24 @@ python bot.py
 
 ## 自定义构建
 
-如果您想自己构建Docker镜像，可以使用以下命令：
+### 使用GitHub Actions构建（推荐）
+
+本项目配置了GitHub Actions工作流，可以构建多架构Docker镜像：
+
+1. Fork本仓库到您的GitHub账号
+2. 在仓库设置中添加DockerHub密钥:
+   - 访问 `Settings > Secrets and variables > Actions`
+   - 添加 `DOCKERHUB_USERNAME`: 您的Docker Hub用户名
+   - 添加 `DOCKERHUB_TOKEN`: Docker Hub访问令牌
+3. 手动触发构建:
+   - 访问仓库的 `Actions` 标签页
+   - 选择 `Docker Build and Push` 工作流
+   - 点击 `Run workflow` 按钮，选择分支并启动构建
+4. 构建完成后，镜像将发布到 `YOUR_USERNAME/ytbot:latest`
+
+### 本地构建
+
+如果您想在本地构建Docker镜像，可以使用以下命令：
 
 ```bash
 # 构建多架构镜像（需要设置Docker Buildx）

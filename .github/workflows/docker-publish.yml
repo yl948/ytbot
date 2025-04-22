@@ -1,12 +1,7 @@
 name: Docker Build and Push
 
 on:
-  push:
-    branches: [ "main" ]
-    tags: [ 'v*.*.*' ]
-  pull_request:
-    branches: [ "main" ]
-  workflow_dispatch:  # 允许手动触发
+  workflow_dispatch:  # 仅允许手动触发
 
 env:
   REGISTRY: docker.io
@@ -34,7 +29,6 @@ jobs:
 
       # 登录到DockerHub
       - name: Login to DockerHub
-        if: github.event_name != 'pull_request'
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -47,12 +41,8 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest
             type=sha,format=short
-            type=raw,value=latest,enable={{is_default_branch}}
 
       # 构建并推送Docker镜像
       - name: Build and push Docker image
@@ -60,7 +50,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: .
-          push: ${{ github.event_name != 'pull_request' }}
+          push: true
           platforms: ${{ env.PLATFORMS }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

@@ -2,6 +2,16 @@ name: Docker Build and Push
 
 on:
   workflow_dispatch:  # 仅允许手动触发
+    inputs:
+      version:
+        description: '版本号 (例如: 1.0.0)'
+        required: true
+        default: 'latest'
+      publish_latest:
+        description: '同时发布为latest标签'
+        required: true
+        type: boolean
+        default: true
 
 env:
   REGISTRY: docker.io
@@ -34,15 +44,21 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 提取元数据（标签、标签等）
-      - name: Extract Docker metadata
-        id: meta
-        uses: docker/metadata-action@v4
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=raw,value=latest
-            type=sha,format=short
+      # 准备标签
+      - name: Prepare Tags
+        id: prep
+        run: |
+          VERSION=${{ github.event.inputs.version }}
+          TAGS="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION}"
+          
+          # 如果选择同时发布为latest标签
+          if [[ "${{ github.event.inputs.publish_latest }}" == "true" ]]; then
+            TAGS="${TAGS},${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+          fi
+          
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "tags=${TAGS}" >> $GITHUB_OUTPUT
+          echo "将构建以下标签: ${TAGS}"
 
       # 构建并推送Docker镜像
       - name: Build and push Docker image
@@ -52,7 +68,6 @@ jobs:
           context: .
           push: true
           platforms: ${{ env.PLATFORMS }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.prep.outputs.tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max 

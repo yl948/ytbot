@@ -126,8 +126,13 @@ python bot.py
 3. 手动触发构建:
    - 访问仓库的 `Actions` 标签页
    - 选择 `Docker Build and Push` 工作流
-   - 点击 `Run workflow` 按钮，选择分支并启动构建
-4. 构建完成后，镜像将发布到 `YOUR_USERNAME/ytbot:latest`
+   - 点击 `Run workflow` 按钮
+   - 输入版本号（例如：1.0.0, 1.1.0）
+   - 选择是否同时发布为latest标签
+   - 点击 `Run workflow` 开始构建
+4. 构建完成后，镜像将发布到Docker Hub:
+   - 指定版本: `YOUR_USERNAME/ytbot:1.0.0`
+   - latest标签: `YOUR_USERNAME/ytbot:latest`
 
 ### 本地构建
 
@@ -135,10 +140,10 @@ python bot.py
 
 ```bash
 # 构建多架构镜像（需要设置Docker Buildx）
-docker buildx build --platform linux/amd64,linux/arm64 -t yourusername/ytbot:latest .
+docker buildx build --platform linux/amd64,linux/arm64 -t yourusername/ytbot:1.0.0 .
 
 # 仅构建当前平台镜像
-docker build -t yourusername/ytbot:latest .
+docker build -t yourusername/ytbot:1.0.0 .
 ```
 
 ## 许可证

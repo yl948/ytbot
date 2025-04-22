@@ -6,12 +6,12 @@ services:
     container_name: ytbot
     restart: unless-stopped
     environment:
-      - BOT_TOKEN=7970405294:AAEP3r-mm-5laI-NxktvTvssPQjLxDI4TKU
-      - ADMIN_USER_ID=7037272897
+      - BOT_TOKEN=${BOT_TOKEN}
+      - ADMIN_USER_ID=${ADMIN_USER_ID}
       - DOWNLOAD_PATH=/app/downloads
       # 如果需要代理，取消下面两行的注释并填入代理地址
-      - HTTP_PROXY=http://192.168.31.222:7890
-      - HTTPS_PROXY=http://192.168.31.222:7890
+      # - HTTP_PROXY=${HTTP_PROXY}
+      # - HTTPS_PROXY=${HTTPS_PROXY}
     volumes:
-      - /mnt/asus/youtube/:/app/downloads
-    network_mode: "host"
+      - ./downloads:/app/downloads
+    network_mode: "host" 

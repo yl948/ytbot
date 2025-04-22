@@ -38,12 +38,12 @@ downloads/
 
 # Local config
 config.py
-
-# Environment
 docker-compose.yml
 
 # 确保示例文件不被忽略
 !config.py.example
+!.env.example
+!docker-compose.yml.example
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -74,7 +74,7 @@ token.json
 
 # 确保示例文件不被忽略
 !.env.example
-!docker-compose.yml
+!docker-compose.yml.example
 
 # 下载缓存和媒体文件
 downloads/

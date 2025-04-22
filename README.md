@@ -32,21 +32,7 @@ touch .env
 nano .env  # 或使用任何文本编辑器
 ```
 
-`.env`文件内容示例：
-```
-# Telegram Bot Token (必须，从BotFather获取 https://t.me/BotFather)
-BOT_TOKEN=1234567890:ABCDEFGHIJKLMNOPQRSTUVWXYZ
-
-# 管理员用户ID (必须，使用 @userinfobot 获取)
-ADMIN_USER_ID=123456789
-
-# 下载路径 (Docker容器内路径，通常无需修改)
-DOWNLOAD_PATH=/app/downloads
-
-# 代理设置 (可选，中国用户可能需要设置)
-HTTP_PROXY=http://host.docker.internal:7890
-HTTPS_PROXY=http://host.docker.internal:7890
-```
+需要配置的环境变量包括Telegram Bot Token(从@BotFather获取)和管理员用户ID(从@userinfobot获取)，如果在中国使用还需要配置HTTP代理。
 
 ### 使用预构建镜像
 

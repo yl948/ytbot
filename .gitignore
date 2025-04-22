@@ -1,0 +1,106 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+.env
+.venv
+venv/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+
+# Logs
+*.log
+
+# Downloads folder
+downloads/
+
+# Local config
+config.py
+
+# Environment
+docker-compose.yml
+
+# 确保示例文件不被忽略
+!config.py.example
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 虚拟环境
+venv/
+env/
+.env
+.venv/
+
+# 日志文件
+*.log
+
+# 本地配置文件和敏感信息
+.env
+.env.*
+*.key
+secrets/
+config_local.py
+config.py
+credentials.json
+token.json
+*.pem
+*.crt
+*.key
+
+# 确保示例文件不被忽略
+!.env.example
+!docker-compose.yml
+
+# 下载缓存和媒体文件
+downloads/
+media/
+videos/
+*.mp4
+*.webm
+*.mkv
+*.mp3
+*.m4a
+*.jpg
+*.jpeg
+*.png
+
+# Docker相关
+.docker/
+docker-compose.override.yml
+
+# 其他临时文件
+temp/
+tmp/
+
+# IDE相关
+.idea/
+.vscode/
+*.sublime-*
+*.swp
+.DS_Store
+Thumbs.db 

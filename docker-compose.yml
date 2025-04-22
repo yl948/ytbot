@@ -1,0 +1,23 @@
+version: '3'
+
+services:
+  ytbot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ytbot
+    restart: unless-stopped
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
+      - ADMIN_USER_ID=${ADMIN_USER_ID}
+      - DOWNLOAD_PATH=/app/downloads
+      - HTTP_PROXY=${HTTP_PROXY}
+      - HTTPS_PROXY=${HTTPS_PROXY}
+    volumes:
+      - ./downloads:/app/downloads
+    networks:
+      - ytbot-network
+
+networks:
+  ytbot-network:
+    driver: bridge 

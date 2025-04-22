@@ -1,0 +1,6 @@
+python-telegram-bot==20.7
+yt-dlp
+python-dotenv
+psutil==5.9.8
+ffmpeg-python
+backoff==2.2.1

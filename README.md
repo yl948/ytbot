@@ -16,24 +16,6 @@
 
 ## 使用Docker（推荐）
 
-### 配置环境变量
-
-首先，创建并配置环境变量：
-
-```bash
-# 克隆仓库
-git clone https://github.com/yl948/ytbot.git
-cd ytbot
-
-# 创建环境变量文件
-touch .env
-
-# 编辑.env文件
-nano .env  # 或使用任何文本编辑器
-```
-
-需要配置的环境变量包括Telegram Bot Token(从@BotFather获取)和管理员用户ID(从@userinfobot获取)，如果在中国使用还需要配置HTTP代理。
-
 ### 使用预构建镜像
 
 ```bash
@@ -42,23 +24,22 @@ docker run -d \
   --name ytbot \
   --restart unless-stopped \
   -v $(pwd)/downloads:/app/downloads \
-  --env-file .env \
+  -e BOT_TOKEN=你的Telegram机器人Token \
+  -e ADMIN_USER_ID=你的Telegram用户ID \
+  -e DOWNLOAD_PATH=/app/downloads \
   ainxxy/ytbot:latest
+```
+
+中国用户可能需要添加代理设置：
+```bash
+# 添加代理设置
+-e HTTP_PROXY=http://host.docker.internal:7890 \
+-e HTTPS_PROXY=http://host.docker.internal:7890 \
 ```
 
 ### 使用docker-compose
 
-克隆示例配置文件并进行修改：
-
-```bash
-# 复制示例配置文件
-cp docker-compose.yml.example docker-compose.yml
-
-# 编辑配置文件
-nano docker-compose.yml  # 或使用任何文本编辑器
-```
-
-`docker-compose.yml`文件示例：
+创建`docker-compose.yml`文件并添加以下内容：
 
 ```yaml
 services:
@@ -69,12 +50,12 @@ services:
     container_name: ytbot
     restart: unless-stopped
     environment:
-      - BOT_TOKEN=${BOT_TOKEN}
-      - ADMIN_USER_ID=${ADMIN_USER_ID}
+      - BOT_TOKEN=你的Telegram机器人Token
+      - ADMIN_USER_ID=你的Telegram用户ID
       - DOWNLOAD_PATH=/app/downloads
       # 如果需要代理，取消下面两行的注释并填入代理地址
-      # - HTTP_PROXY=${HTTP_PROXY}
-      # - HTTPS_PROXY=${HTTPS_PROXY}
+      # - HTTP_PROXY=http://host.docker.internal:7890
+      # - HTTPS_PROXY=http://host.docker.internal:7890
     volumes:
       - ./downloads:/app/downloads
     network_mode: "host"
@@ -82,24 +63,12 @@ services:
 
 你可以选择使用预构建镜像或本地构建：
 
-1. 使用预构建镜像：
+1. 使用预构建镜像，将`build`部分替换为：
 ```yaml
-# 修改docker-compose.yml中的build部分为image
-services:
-  ytbot:
-    image: ainxxy/ytbot:latest
-    # 或者指定架构
-    # image: ainxxy/ytbot:latest-amd64
-    # image: ainxxy/ytbot:latest-arm64
-```
-
-2. 使用本地构建（默认配置）：
-```yaml
-services:
-  ytbot:
-    build:
-      context: .
-      dockerfile: Dockerfile
+image: ainxxy/ytbot:latest
+# 或者指定架构
+# image: ainxxy/ytbot:latest-amd64
+# image: ainxxy/ytbot:latest-arm64
 ```
 
 然后启动容器：
@@ -142,13 +111,17 @@ cd ytbot
 pip install -r requirements.txt
 ```
 
-3. 创建`.env`文件并配置
-```
-BOT_TOKEN=你的Telegram机器人Token
-ADMIN_USER_ID=你的Telegram用户ID
-DOWNLOAD_PATH=./downloads
-HTTP_PROXY=http://proxy:port（可选）
-HTTPS_PROXY=http://proxy:port（可选）
+3. 创建配置文件
+```bash
+# 创建config.py文件
+cat > config.py << EOF
+BOT_TOKEN = "你的Telegram机器人Token"
+ADMIN_USER_ID = "你的Telegram用户ID"
+DOWNLOAD_PATH = "./downloads"
+# 如果需要代理，取消下面两行的注释并填入代理地址
+# HTTP_PROXY = "http://proxy:port"
+# HTTPS_PROXY = "http://proxy:port"
+EOF
 ```
 
 4. 启动机器人

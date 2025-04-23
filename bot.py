@@ -832,10 +832,11 @@ async def start_download(message, url, format_id, video_title):
         }) as ydl:
             info = ydl.extract_info(url, download=False)
             video_title = info.get('title', '未知标题')
+            # 清理文件名中的非法字符
+            video_title = re.sub(r'[\\/*?:"<>|]', '', video_title).strip()
             
             # 根据format_id确定分辨率标签
             resolution = "最佳质量"
-            format_suffix = ""  # 用于保存文件名的后缀
             
             if format_id != 'best':
                 # 检查是否有特殊格式要求（如高帧率、HDR等）
@@ -883,36 +884,31 @@ async def start_download(message, url, format_id, video_title):
                 # 添加帧率和HDR标记
                 if is_high_fps:
                     resolution += "60"
-                    format_suffix += "60fps"
                 if is_hdr:
                     resolution += " HDR"
-                    format_suffix += "HDR"
             
-            # 检查是否存在相同分辨率的文件
+            # 创建存放视频的文件夹 (只创建一级目录)
             video_folder = os.path.join(DOWNLOAD_PATH, video_title)
-            if os.path.exists(video_folder):
-                existing_files = [f for f in os.listdir(video_folder) 
-                                if f.endswith(('.mp4', '.webm', '.mkv')) 
-                                and resolution in f]
-                
-                if existing_files:
-                    logger.info(f"跳过下载: {video_title} - {resolution} 已存在")
-                    await status_message.edit_text(f"⏭️ 跳过下载：该视频的 {resolution} 版本已存在")
-                    return
-            
-            # 创建新的视频目录
             os.makedirs(video_folder, exist_ok=True)
             
-            # 完整的文件名
-            output_filename = f"{video_title} - {resolution}"
-            if format_suffix:  # 添加可选的格式后缀
-                output_filename += f" ({format_suffix})"
+            # 检查是否已经下载过相同分辨率的视频
+            existing_files = [f for f in os.listdir(video_folder) 
+                            if f.endswith(('.mp4', '.webm', '.mkv')) 
+                            and resolution in f]
+            
+            if existing_files:
+                logger.info(f"跳过下载: {video_title} - {resolution} 已存在")
+                await status_message.edit_text(f"⏭️ 跳过下载：该视频的 {resolution} 版本已存在")
+                return
             
             # 设置下载格式
             if format_id == 'best':
                 format_opt = 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best'
             else:
                 format_opt = f'{format_id}+bestaudio[ext=m4a]/best'
+            
+            # 简化文件名 - 直接使用"video.mp4"作为文件名
+            output_filename = f"video_{resolution}"
             
             ydl_opts = {
                 'format': format_opt,
@@ -978,7 +974,7 @@ async def start_download(message, url, format_id, video_title):
         video_size = os.path.getsize(video_path)
         logger.info(f"视频文件大小: {format_size(video_size)}")
         
-        # 生成NFO文件
+        # 生成NFO文件 - 直接使用video.nfo作为文件名
         nfo_content = f"""<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <movie>
     <title>{info['title']}</title>
@@ -997,13 +993,13 @@ async def start_download(message, url, format_id, video_title):
     <trailer>{url}</trailer>
 </movie>"""
         
-        # 保存NFO文件，使用与视频相同的文件名
-        nfo_path = os.path.join(video_folder, f"{video_filename}.nfo")
+        # 保存NFO文件，使用简洁的文件名
+        nfo_path = os.path.join(video_folder, "video.nfo")
         with open(nfo_path, 'w', encoding='utf-8') as f:
             f.write(nfo_content)
             
-        # 重命名下载的缩略图
-        thumb_files = [f for f in os.listdir(video_folder) if f.endswith('.jpg')]
+        # 重命名下载的缩略图为poster.jpg
+        thumb_files = [f for f in os.listdir(video_folder) if f.endswith('.jpg') and f != "poster.jpg"]
         if thumb_files:
             old_thumb_path = os.path.join(video_folder, thumb_files[0])
             new_thumb_path = os.path.join(video_folder, "poster.jpg")
@@ -1286,8 +1282,8 @@ def main():
                         ip_address = "无法获取"
                     
                     startup_message = (
-                        f"🤖 *YouTube下载机器人已启动*\n\n"
-                        f"🖥 *系统信息*:\n"
+                        f"🤖 YouTube下载机器人已启动\n\n"
+                        f"🖥 系统信息:\n"
                         f"系统: {system_info}\n"
                         f"内存: {memory_info}\n"
                         f"CPU: {cpu_info}\n"
@@ -1305,7 +1301,7 @@ def main():
                         application.bot.send_message(
                             chat_id=ADMIN_USER_ID, 
                             text=startup_message,
-                            parse_mode="Markdown"
+                            parse_mode=None  # 移除Markdown格式
                         )
                     )
                     logger.info(f"✅ 已向管理员 (ID: {ADMIN_USER_ID}) 发送启动通知")

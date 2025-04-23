@@ -19,24 +19,13 @@ RUN apt-get update && apt-get install -y \
 # 复制项目文件
 COPY requirements.txt .
 COPY bot.py .
-
-# 创建配置文件
-RUN echo 'import os\n\
-BOT_TOKEN = os.getenv("BOT_TOKEN", "")\n\
-ADMIN_USER_ID = os.getenv("ADMIN_USER_ID", "")\n\
-DOWNLOAD_PATH = os.getenv("DOWNLOAD_PATH", "downloads")\n\
-SUPPORTED_URLS = ["youtube.com", "youtu.be"]\n\
-HTTP_PROXY = os.getenv("HTTP_PROXY", "")\n\
-HTTPS_PROXY = os.getenv("HTTPS_PROXY", "")\n\
-enable_quality_selection = True\n\
-download_queue = []\n\
-is_downloading = False' > config.py
-
-# 安装Python依赖
-RUN pip install --no-cache-dir -r requirements.txt
+COPY config.py .
 
 # 设置环境变量
 ENV PYTHONUNBUFFERED=1
+
+# 安装Python依赖
+RUN pip install --no-cache-dir -r requirements.txt
 
 # 创建下载目录
 RUN mkdir -p /app/downloads

@@ -907,8 +907,14 @@ async def start_download(message, url, format_id, video_title):
             else:
                 format_opt = f'{format_id}+bestaudio[ext=m4a]/best'
             
-            # 简化文件名 - 直接使用"video.mp4"作为文件名
-            output_filename = f"video_{resolution}"
+            # 使用视频标题作为文件名，但添加分辨率后缀
+            # 确保文件名不超过系统限制(一般文件系统最大长度为255字符)
+            max_filename_length = 200  # 预留一些空间给扩展名和路径
+            safe_title = video_title
+            if len(safe_title) > max_filename_length:
+                safe_title = safe_title[:max_filename_length]
+                
+            output_filename = f"{safe_title}_{resolution}"
             
             ydl_opts = {
                 'format': format_opt,
@@ -974,7 +980,7 @@ async def start_download(message, url, format_id, video_title):
         video_size = os.path.getsize(video_path)
         logger.info(f"视频文件大小: {format_size(video_size)}")
         
-        # 生成NFO文件 - 直接使用video.nfo作为文件名
+        # 生成NFO文件 - 使用视频标题作为文件名
         nfo_content = f"""<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <movie>
     <title>{info['title']}</title>
@@ -993,8 +999,9 @@ async def start_download(message, url, format_id, video_title):
     <trailer>{url}</trailer>
 </movie>"""
         
-        # 保存NFO文件，使用简洁的文件名
-        nfo_path = os.path.join(video_folder, "video.nfo")
+        # 保存NFO文件，使用文件夹名称作为文件名
+        folder_name = os.path.basename(video_folder)
+        nfo_path = os.path.join(video_folder, f"{folder_name}.nfo")
         with open(nfo_path, 'w', encoding='utf-8') as f:
             f.write(nfo_content)
             
@@ -1004,6 +1011,21 @@ async def start_download(message, url, format_id, video_title):
             old_thumb_path = os.path.join(video_folder, thumb_files[0])
             new_thumb_path = os.path.join(video_folder, "poster.jpg")
             os.rename(old_thumb_path, new_thumb_path)
+        
+        # 查找实际下载的视频文件并更名为文件夹名称
+        video_files = [f for f in os.listdir(video_folder) if f.endswith(('.mp4', '.webm', '.mkv'))]
+        if video_files:
+            # 获取当前视频文件的扩展名
+            current_video_path = os.path.join(video_folder, video_files[0])
+            _, ext = os.path.splitext(current_video_path)
+            
+            # 创建与文件夹同名的视频文件名
+            new_video_filename = f"{folder_name}{ext}"
+            new_video_path = os.path.join(video_folder, new_video_filename)
+            
+            # 重命名视频文件
+            os.rename(current_video_path, new_video_path)
+            video_path = new_video_path
         
         # 检查字幕文件
         subtitle_files = [f for f in os.listdir(video_folder) if f.endswith(('.srt', '.vtt'))]

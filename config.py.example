@@ -1,0 +1,33 @@
+import os
+from dotenv import load_dotenv
+
+# 加载环境变量
+load_dotenv()
+
+# Telegram Bot Token (必须)
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+
+# 管理员用户ID (必须)
+ADMIN_USER_ID = os.getenv("ADMIN_USER_ID")
+
+# 下载路径
+DOWNLOAD_PATH = os.getenv("DOWNLOAD_PATH", "./downloads")
+
+# 支持的网站URLs
+SUPPORTED_URLS = ["youtube.com", "youtu.be"]
+
+# 代理设置
+HTTP_PROXY = os.getenv("HTTP_PROXY")
+HTTPS_PROXY = os.getenv("HTTPS_PROXY")
+
+# 质量选择功能（True为开启手动选择，False为自动选择最高质量）
+enable_quality_selection = True
+
+# 默认分辨率设置 (可选值: 'best', '4320p', '2160p', '1440p', '1080p', '720p', '480p', '360p', '240p', '144p')
+default_resolution = 'best'
+
+# 下载队列
+download_queue = []
+
+# 下载状态标志
+is_downloading = False 

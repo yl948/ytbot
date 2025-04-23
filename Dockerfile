@@ -19,7 +19,7 @@ RUN apt-get update && apt-get install -y \
 # 复制项目文件
 COPY requirements.txt .
 COPY bot.py .
-COPY config.py .
+COPY config.py.example config.py
 
 # 设置环境变量
 ENV PYTHONUNBUFFERED=1
